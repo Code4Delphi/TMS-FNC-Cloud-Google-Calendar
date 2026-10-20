@@ -77,3 +77,9 @@ __recovery/
 
 # Castalia statistics file (since XE7 Castalia is distributed with Delphi)
 *.stat
+
+# Credenciais e tokens
+Tokens*.ini
+*.credentials.json
+client_secret*.json
+credentials.json
