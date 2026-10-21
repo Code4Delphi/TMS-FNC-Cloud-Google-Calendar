@@ -3,7 +3,7 @@ Exemplo didático de consulta, criação, alteração e exclusão de compromisso
 
 
 ## Conectar
-1. Preencha **Client ID** e **Client Secret**. O segredo fica mascarado.
+1. Preencha **Client ID** e **Client Secret**.
 2. Clique em **Conectar**.
 3. Se o navegador abrir, selecione a conta e autorize o acesso.
 4. Aguarde a indicação de conexão e a primeira consulta automática.
@@ -49,47 +49,4 @@ Chamadas e eventos principais:
 | Alterar | `Update` | `OnUpdateCalendarItem` |
 | Excluir | `Delete` | `OnDeleteCalendarItem` |
 
-## Limites do exemplo
 
-O CRUD é voltado a compromissos simples, inclusive de dia inteiro. Eventos
-recorrentes são apenas consultados; os botões de alteração e exclusão ficam
-bloqueados. Não há interface para regras de recorrência, participantes, Google
-Meet, compartilhamento ou gerenciamento de agendas. Este exemplo não implementa
-sincronização em segundo plano nem paginação além dos 2.500 registros da consulta.
-
-Use compromissos simples de teste para o roteiro abaixo. Campos avançados não
-representados pelo conector instalado não fazem parte da demonstração de edição.
-
-## Teste real com sua conta
-
-1. Conecte a conta e consulte um período que inclua amanhã.
-2. Crie um evento chamado **Teste Delphi Google Calendar**, amanhã, das 10:00 às 10:30.
-3. Confirme o evento na lista e no Google Calendar.
-4. Selecione-o, altere o título e o horário e clique em **Salvar alterações**.
-5. Confira que o mesmo evento foi alterado.
-6. Selecione-o, clique em **Excluir**, cancele a confirmação e confira que ele permanece.
-7. Repita a exclusão e confirme; confira sua remoção na lista e no Google Calendar.
-8. Crie um evento de **Dia todo**, com o primeiro e o último dia iguais, e confira
-   que ele ocupa apenas esse dia. Altere o último dia, confira e exclua o evento.
-9. Consulte um evento recorrente e confira que sua alteração e exclusão estão bloqueadas.
-10. Use **Sair**, confira o bloqueio das operações e reconecte a conta.
-11. Para testar um erro de permissão, tente consultar uma agenda à qual a conta
-    não tenha acesso e confira a mensagem retornada.
-
-## Verificação realizada na criação
-
-- Compilação Debug/Win32 por `dcc32`: concluída.
-- Conversão do DFM em cópia temporária com `convert.exe -i`: concluída.
-- Carregamento real do formulário e 26 verificações locais: concluídos, sem
-  chamadas ao Google. Foram cobertos campos obrigatórios, datas, seleção,
-  recorrência, término exclusivo de dia inteiro e ocultação de credenciais.
-- O MSBuild deste ambiente encontrou um bloqueio de acesso ao Registro na tarefa
-  Embarcadero BRCC32, anterior à compilação. A compilação foi concluída diretamente
-  com o compilador e o compilador de recursos do RAD Studio. O projeto permanece
-  disponível para abrir e compilar normalmente na IDE.
-- A autenticação e o CRUD contra o Google dependem das suas credenciais e não
-  foram executados automaticamente.
-
-Documentação:
-- [TMS Google Calendar](https://doc.tmssoftware.com/fnc/cloudpack/googlecalendar/)
-- [Google Calendar API](https://developers.google.com/workspace/calendar/api)
