@@ -355,7 +355,7 @@ begin
 
   try
     // timeMax e exclusivo: inclui todo o dia final escolhido.
-    CloudGoogleCalendar.GetCalendar(LCalendarID, DateOf(edtDataIni.Date), IncDay(DateOf(edtDataFim.Date)), 500);
+    CloudGoogleCalendar.GetCalendar(LCalendarID, DateOf(edtDataIni.Date), IncDay(DateOf(edtDataFim.Date)), 1500);
   except
     on E: Exception do
     begin
@@ -443,8 +443,8 @@ begin
 
     Self.AddLog(Format('%d compromisso(s) recebido(s).', [CloudGoogleCalendar.Items.Count]));
 
-    if CloudGoogleCalendar.Items.Count >= 500 then
-      Self.AddLog('Limite de 500 registros atingido. Reduza o periodo da consulta.');
+    if CloudGoogleCalendar.Items.Count >= 1500 then
+      Self.AddLog('Limite de 1500 registros atingido. Reduza o periodo da consulta.');
   finally
     Self.DefinirOcupado(False);
   end;
