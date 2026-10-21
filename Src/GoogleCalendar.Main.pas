@@ -259,7 +259,8 @@ begin
   CloudGoogleCalendar.Authentication.CallBackURL := 'http://127.0.0.1:8000';
   CloudGoogleCalendar.Authentication.Locale := 'pt-BR';
 
-  var LPasta := TPath.Combine(GetEnvironmentVariable('LOCALAPPDATA'), 'Code4D\GoogleCalendarDemo');
+  //var LPasta := TPath.Combine(GetEnvironmentVariable('LOCALAPPDATA'), 'Code4D\GoogleCalendarDemo');
+  var LPasta := ExtractFilePath(ParamStr(0));
   if not ForceDirectories(LPasta) then
     raise Exception.Create('Nao foi possivel criar a pasta de tokens.');
 

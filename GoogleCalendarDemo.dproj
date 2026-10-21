@@ -38,12 +38,11 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
         <DCC_DcuOutput>dcu\$(Platform)\$(Config)</DCC_DcuOutput>
-        <DCC_ExeOutput>bin\$(Platform)\$(Config)</DCC_ExeOutput>
+        <DCC_ExeOutput>bin</DCC_ExeOutput>
         <DCC_UnitSearchPath>$(TMSProductsDir)\tms.fnc.cloudpack\source;$(TMSProductsDir)\tms.fnc.core\source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_IncludePath>$(TMSProductsDir)\tms.fnc.cloudpack\source;$(TMSProductsDir)\tms.fnc.core\source;$(DCC_IncludePath)</DCC_IncludePath>
         <DCC_ResourcePath>$(TMSProductsDir)\tms.fnc.cloudpack\source;$(TMSProductsDir)\tms.fnc.core\source;$(DCC_ResourcePath)</DCC_ResourcePath>
         <DCC_Namespace>Winapi;System.Win;System;Vcl;Vcl.Imaging;Xml;Data;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_UsePackage>;$(DCC_UsePackage)</DCC_UsePackage>
         <DCC_E>false</DCC_E>
         <DCC_N>false</DCC_N>
         <DCC_S>false</DCC_S>
@@ -112,6 +111,10 @@
                 <Source>
                     <Source Name="MainSource">GoogleCalendarDemo.dpr</Source>
                 </Source>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k290.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp290.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>
                 <Platform value="Win32">True</Platform>
