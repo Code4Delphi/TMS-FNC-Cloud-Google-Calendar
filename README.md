@@ -26,6 +26,28 @@ página de autorização do navegador. Ele não cancela operações de gravaçã
 ## Criar, alterar e excluir
 - É possível adicionar alterar e excluir compromissos pelo form
 
+## Como gerar as credenciais do Google Calendar
+1. Acesse o [Google Cloud Console](https://console.cloud.google.com/).
+2. Crie um projeto e mantenha-o selecionado durante toda a configuração.
+3. Ative a API em **APIs e serviços → Biblioteca → Google Calendar API → Ativar**.
+4. Acesse **Tela de permissão OAuth** e clique em **Vamos começar**.
+5. Preencha as informações do aplicativo:
+   - **Nome:** nome do seu sistema.
+   - **E-mail de suporte:** seu e-mail.
+   - **Público:** Externo, para permitir o acesso com contas Gmail.
+   - **Dados de contato:** seu e-mail.
+   Avance, aceite os termos apresentados e clique em **Criar**.
+   
+7. Clique em **Criar um cliente OAuth** e preencha:
+   - **Tipo de aplicativo:** Aplicativo para computador.
+   - **Nome:** um nome para identificar sua aplicação, como `Agenda Delphi Windows`.
+   Clique em **Criar**.
+
+8. Copie o **ID do cliente (Client ID)** e a **Chave secreta do cliente (Client Secret)**. Esses valores serão informados na tela do exemplo Delphi.
+9. Acesse **Público-alvo → Usuários de teste → Adicionar usuários**. Informe o e-mail da conta cuja agenda será acessada e clique em **Salvar**.
+
+Confira o passo a passo completo no vídeo de demonstração abaixo. 
+
 ## Credenciais e sessão
 - Client ID e Client Secret não são gravados pelo exemplo e devem ser preenchidos  a cada execução.
 - Os tokens são persistidos pelo mecanismo `PersistTokens` da TMS em `%LOCALAPPDATA%\Code4D\GoogleCalendarDemo\Tokens.ini`.
