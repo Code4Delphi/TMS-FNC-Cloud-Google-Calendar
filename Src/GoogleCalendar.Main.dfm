@@ -26,10 +26,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 4
-    ExplicitLeft = 193
-    ExplicitTop = 171
-    ExplicitWidth = 185
-    ExplicitHeight = 41
     object gBoxConsulta: TGroupBox
       Left = 0
       Top = 0
@@ -39,20 +35,18 @@ object GoogleCalendarMain: TGoogleCalendarMain
       Caption = ' Consultar compromissos '
       Enabled = False
       TabOrder = 0
-      ExplicitLeft = -5
-      ExplicitTop = -4
-      ExplicitWidth = 686
-      ExplicitHeight = 454
+      ExplicitLeft = 10
+      ExplicitTop = -6
       DesignSize = (
         688
         456)
       object lbCalendarID: TLabel
         Left = 16
         Top = 24
-        Width = 100
+        Width = 169
         Height = 15
         AutoSize = False
-        Caption = 'ID da agenda'
+        Caption = 'ID da agenda (edtCalendarID)'
       end
       object lbDataIni: TLabel
         Left = 16
@@ -79,7 +73,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
         TabOrder = 0
         Text = 'primary'
         OnChange = edtCalendarIDChange
-        ExplicitWidth = 354
       end
       object edtDataIni: TDateTimePicker
         Left = 16
@@ -110,11 +103,10 @@ object GoogleCalendarMain: TGoogleCalendarMain
         Caption = 'Consultar'
         TabOrder = 3
         OnClick = btnConsultarClick
-        ExplicitLeft = 526
       end
       object listEventos: TListView
         Left = 16
-        Top = 138
+        Top = 131
         Width = 656
         Height = 302
         Anchors = [akLeft, akTop, akRight, akBottom]
@@ -145,8 +137,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
         TabOrder = 4
         ViewStyle = vsReport
         OnSelectItem = listEventosSelectItem
-        ExplicitWidth = 620
-        ExplicitHeight = 254
       end
     end
     object gBoxCompromisso: TGroupBox
@@ -158,9 +148,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
       Caption = ' Compromisso '
       Enabled = False
       TabOrder = 1
-      ExplicitLeft = 676
-      ExplicitTop = 48
-      ExplicitHeight = 408
       DesignSize = (
         412
         456)
@@ -295,7 +282,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
         Anchors = [akLeft, akTop, akRight, akBottom]
         ScrollBars = ssVertical
         TabOrder = 7
-        ExplicitHeight = 60
       end
       object btnNovo: TButton
         Left = 16
@@ -306,7 +292,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
         Caption = 'Novo'
         TabOrder = 8
         OnClick = btnNovoClick
-        ExplicitTop = 364
       end
       object btnCriar: TButton
         Left = 89
@@ -317,7 +302,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
         Caption = 'Criar'
         TabOrder = 9
         OnClick = btnCriarClick
-        ExplicitTop = 364
       end
       object btnSalvar: TButton
         Left = 162
@@ -329,7 +313,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
         Enabled = False
         TabOrder = 10
         OnClick = btnSalvarClick
-        ExplicitTop = 364
       end
       object btnExcluir: TButton
         Left = 321
@@ -341,7 +324,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
         Enabled = False
         TabOrder = 11
         OnClick = btnExcluirClick
-        ExplicitTop = 364
       end
     end
   end
@@ -353,9 +335,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
     Align = alTop
     Caption = ' Conex'#227'o com o Google '
     TabOrder = 0
-    ExplicitLeft = 12
-    ExplicitTop = 12
-    ExplicitWidth = 1076
     DesignSize = (
       1100
       150)
@@ -400,7 +379,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
       TabOrder = 0
       TextHint = 'Seu cliente OAuth do tipo Aplicativo para computador'
       OnChange = CredenciaisChange
-      ExplicitWidth = 800
     end
     object edtClientSecret: TEdit
       Left = 16
@@ -411,7 +389,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
       PasswordChar = '*'
       TabOrder = 1
       OnChange = CredenciaisChange
-      ExplicitWidth = 800
     end
     object btnConectar: TButton
       Left = 860
@@ -422,7 +399,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
       Caption = 'Conectar'
       TabOrder = 2
       OnClick = btnConectarClick
-      ExplicitLeft = 836
     end
     object btnCancelar: TButton
       Left = 860
@@ -434,7 +410,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
       Enabled = False
       TabOrder = 3
       OnClick = btnCancelarClick
-      ExplicitLeft = 836
     end
     object btnSair: TButton
       Left = 1000
@@ -446,7 +421,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
       Enabled = False
       TabOrder = 4
       OnClick = btnSairClick
-      ExplicitLeft = 976
     end
   end
   object gBoxMensagens: TGroupBox
@@ -457,9 +431,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
     Align = alBottom
     Caption = ' Mensagens '
     TabOrder = 1
-    ExplicitLeft = 12
-    ExplicitTop = 594
-    ExplicitWidth = 1076
     object mmLog: TMemo
       Left = 2
       Top = 17
@@ -469,24 +440,22 @@ object GoogleCalendarMain: TGoogleCalendarMain
       ReadOnly = True
       ScrollBars = ssVertical
       TabOrder = 0
-      ExplicitLeft = 16
-      ExplicitTop = 24
-      ExplicitWidth = 1044
-      ExplicitHeight = 134
+      ExplicitLeft = 4
+      ExplicitTop = 25
     end
   end
-  object CloudCalendar: TTMSFNCCloudGoogleCalendar
+  object CloudGoogleCalendar: TTMSFNCCloudGoogleCalendar
     Left = 784
     Top = 22
     Width = 26
     Height = 26
     Visible = True
-    OnAccessDenied = CloudCalendarAccessDenied
-    OnConnected = CloudCalendarConnected
-    OnGetCalendar = CloudCalendarGetCalendar
-    OnAddCalendarItem = CloudCalendarAddCalendarItem
-    OnDeleteCalendarItem = CloudCalendarDeleteCalendarItem
-    OnUpdateCalendarItem = CloudCalendarUpdateCalendarItem
+    OnAccessDenied = CloudGoogleCalendarAccessDenied
+    OnConnected = CloudGoogleCalendarConnected
+    OnGetCalendar = CloudGoogleCalendarGetCalendar
+    OnAddCalendarItem = CloudGoogleCalendarAddCalendarItem
+    OnDeleteCalendarItem = CloudGoogleCalendarDeleteCalendarItem
+    OnUpdateCalendarItem = CloudGoogleCalendarUpdateCalendarItem
     Calendars = <>
     Items = <>
   end

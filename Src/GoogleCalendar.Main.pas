@@ -65,7 +65,7 @@ type
     btnExcluir: TButton;
     gBoxMensagens: TGroupBox;
     mmLog: TMemo;
-    CloudCalendar: TTMSFNCCloudGoogleCalendar;
+    CloudGoogleCalendar: TTMSFNCCloudGoogleCalendar;
     pnCorpo: TPanel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -82,14 +82,14 @@ type
     procedure btnSalvarClick(Sender: TObject);
     procedure btnExcluirClick(Sender: TObject);
     procedure listEventosSelectItem(Sender: TObject; Item: TListItem;Selected: Boolean);
-    procedure CloudCalendarConnected(Sender: TObject);
-    procedure CloudCalendarAccessDenied(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult);
-    procedure CloudCalendarGetCalendar(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult);
-    procedure CloudCalendarAddCalendarItem(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult;
+    procedure CloudGoogleCalendarConnected(Sender: TObject);
+    procedure CloudGoogleCalendarAccessDenied(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult);
+    procedure CloudGoogleCalendarGetCalendar(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult);
+    procedure CloudGoogleCalendarAddCalendarItem(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult;
       const ACalendarItem: TTMSFNCCloudGoogleCalendarItem);
-    procedure CloudCalendarUpdateCalendarItem(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult;
+    procedure CloudGoogleCalendarUpdateCalendarItem(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult;
       const ACalendarItem: TTMSFNCCloudGoogleCalendarItem);
-    procedure CloudCalendarDeleteCalendarItem(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult;
+    procedure CloudGoogleCalendarDeleteCalendarItem(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult;
       const ACalendarItem: TTMSFNCCloudGoogleCalendarItem);
   private
     FConectado: Boolean;
@@ -102,8 +102,8 @@ type
     procedure DefinirOcupado(const AOcupado: Boolean);
     procedure LimparEditor;
     procedure LimparLista;
-    procedure Registrar(const AMensagem: string);
-    procedure RegistrarFalha(const AOperacao: string; const ARequestResult: TTMSFNCCloudBaseRequestResult);
+    procedure AddLog(const AMensagem: string);
+    procedure AddLogFalha(const AOperacao: string; const ARequestResult: TTMSFNCCloudBaseRequestResult);
     procedure CarregarEventos;
     procedure ValidarConexao;
     procedure ValidarCompromisso;
@@ -112,7 +112,7 @@ type
     procedure ConcluirOperacao(const AOperacao: string; const ARequestResult: TTMSFNCCloudBaseRequestResult);
     function CalendarID: string;
     function EventoRecorrente: Boolean;
-    function Sanitizar(const ATexto: string): string;
+    function OcultarCredenciais(const ATexto: string): string;
     function PrepararEvento(const AExistente: Boolean): TTMSFNCCloudGoogleCalendarItem;
   end;
 
@@ -125,26 +125,20 @@ implementation
 
 procedure TGoogleCalendarMain.FormCreate(Sender: TObject);
 begin
-  // Colecao separada: erros HTTP nao alteram o evento exibido na lista.
-  FOperacoes := TTMSFNCCloudGoogleCalendarItems.Create(CloudCalendar);
+  //Colecao separada: erros HTTP nao alteram o evento exibido na lista.
+  FOperacoes := TTMSFNCCloudGoogleCalendarItems.Create(CloudGoogleCalendar);
   edtDataIni.Date := Date;
   edtDataFim.Date := IncDay(Date, 30);
   Self.LimparEditor;
   Self.AtualizarControles;
-  Self.Registrar('Preencha Client ID e Client Secret e clique em Conectar.');
+  Self.AddLog('Preencha Client ID e Client Secret e clique em Conectar.');
 end;
 
 procedure TGoogleCalendarMain.FormDestroy(Sender: TObject);
 begin
   FEncerrando := True;
-  CloudCalendar.OnConnected := nil;
-  CloudCalendar.OnAccessDenied := nil;
-  CloudCalendar.OnGetCalendar := nil;
-  CloudCalendar.OnAddCalendarItem := nil;
-  CloudCalendar.OnUpdateCalendarItem := nil;
-  CloudCalendar.OnDeleteCalendarItem := nil;
-  CloudCalendar.CancelRequests;
-  CloudCalendar.DestroyHTTPServer;
+  CloudGoogleCalendar.CancelRequests;
+  CloudGoogleCalendar.DestroyHTTPServer;
   FOperacoes.Free;
 end;
 
@@ -153,8 +147,7 @@ begin
   CanClose := not FOcupado or FAutenticando;
 
   if not CanClose then
-    MessageDlg('Aguarde a operacao com o Google terminar antes de fechar.',
-      mtInformation, [mbOK], 0);
+    MessageDlg('Aguarde a operacao com o Google terminar antes de fechar.', mtInformation, [mbOK], 0);
 end;
 
 procedure TGoogleCalendarMain.AtualizarControles;
@@ -180,32 +173,29 @@ begin
     lbStatus.Caption := 'Desconectado';
 end;
 
-procedure TGoogleCalendarMain.DefinirOcupado(const AOcupado: Boolean);
-begin
-  FOcupado := AOcupado;
-  Self.AtualizarControles;
-end;
-
-function TGoogleCalendarMain.Sanitizar(const ATexto: string): string;
+function TGoogleCalendarMain.OcultarCredenciais(const ATexto: string): string;
 begin
   Result := ATexto;
 
+  //Oculta credenciais e tokens nas mensagens do log
   for var LSegredo in TArray<string>.Create(
     Trim(edtClientID.Text), Trim(edtClientSecret.Text),
-    CloudCalendar.Authentication.AccessToken,
-    CloudCalendar.Authentication.AccessTokenRefresh,
-    CloudCalendar.Authentication.AuthenticationToken) do
+    CloudGoogleCalendar.Authentication.AccessToken,
+    CloudGoogleCalendar.Authentication.AccessTokenRefresh,
+    CloudGoogleCalendar.Authentication.AuthenticationToken)
+  do
+  begin
     if not LSegredo.IsEmpty then
       Result := StringReplace(Result, LSegredo, '[oculto]', [rfReplaceAll]);
+  end;
 end;
 
-procedure TGoogleCalendarMain.Registrar(const AMensagem: string);
+procedure TGoogleCalendarMain.AddLog(const AMensagem: string);
 begin
-  mmLog.Lines.Add(FormatDateTime('hh:nn:ss', Now) + '  ' + Self.Sanitizar(AMensagem));
+  mmLog.Lines.Add(FormatDateTime('hh:nn:ss', Now) + '  ' + Self.OcultarCredenciais(AMensagem));
 end;
 
-procedure TGoogleCalendarMain.RegistrarFalha(const AOperacao: string;
-  const ARequestResult: TTMSFNCCloudBaseRequestResult);
+procedure TGoogleCalendarMain.AddLogFalha(const AOperacao: string; const ARequestResult: TTMSFNCCloudBaseRequestResult);
 begin
   var LMensagem := 'Verifique a conexao e as permissoes da conta.';
   var LJSON := TJSONObject.ParseJSONValue(ARequestResult.ResultString);
@@ -219,8 +209,7 @@ begin
       else if Assigned(LErro) then
         LMensagem := LErro.Value;
 
-      LMensagem := (LJSON as TJSONObject).GetValue<string>(
-        'error_description', LMensagem);
+      LMensagem := (LJSON as TJSONObject).GetValue<string>('error_description', LMensagem);
     end;
   finally
     LJSON.Free;
@@ -229,8 +218,7 @@ begin
   if ARequestResult.ResponseCode = 401 then
     FConectado := False;
 
-  Self.Registrar(Format('%s: HTTP %d. %s',
-    [AOperacao, ARequestResult.ResponseCode, LMensagem]));
+  Self.AddLog(Format('%s: HTTP %d. %s', [AOperacao, ARequestResult.ResponseCode, LMensagem]));
 end;
 
 procedure TGoogleCalendarMain.CredenciaisChange(Sender: TObject);
@@ -261,46 +249,40 @@ begin
   if Trim(edtClientSecret.Text).IsEmpty then
     raise Exception.Create('Informe o Client Secret.');
 
-  if CloudCalendar.RunningRequests.Count > 0 then
+  if CloudGoogleCalendar.RunningRequests.Count > 0 then
     raise Exception.Create('Aguarde o encerramento da requisicao anterior.');
 
-  CloudCalendar.DestroyHTTPServer;
-  CloudCalendar.Authentication.ClearTokens;
-  CloudCalendar.Authentication.ClientID := Trim(edtClientID.Text);
-  CloudCalendar.Authentication.Secret := Trim(edtClientSecret.Text);
-  CloudCalendar.Authentication.CallBackURL := 'http://127.0.0.1:8000';
-  CloudCalendar.Authentication.Locale := 'pt-BR';
+  CloudGoogleCalendar.DestroyHTTPServer;
+  CloudGoogleCalendar.Authentication.ClearTokens;
+  CloudGoogleCalendar.Authentication.ClientID := Trim(edtClientID.Text);
+  CloudGoogleCalendar.Authentication.Secret := Trim(edtClientSecret.Text);
+  CloudGoogleCalendar.Authentication.CallBackURL := 'http://127.0.0.1:8000';
+  CloudGoogleCalendar.Authentication.Locale := 'pt-BR';
 
-  // Remove escopos padrao de outros servicos Google.
-  CloudCalendar.Scopes.Clear;
-  CloudCalendar.Scopes.Add('https://www.googleapis.com/auth/calendar');
-
-  var LPasta := TPath.Combine(
-    GetEnvironmentVariable('LOCALAPPDATA'), 'Code4D\GoogleCalendarDemo');
+  var LPasta := TPath.Combine(GetEnvironmentVariable('LOCALAPPDATA'), 'Code4D\GoogleCalendarDemo');
   if not ForceDirectories(LPasta) then
     raise Exception.Create('Nao foi possivel criar a pasta de tokens.');
 
-  CloudCalendar.PersistTokens.Location := plIniFile;
-  CloudCalendar.PersistTokens.Key := TPath.Combine(LPasta, 'Tokens.ini');
-  CloudCalendar.PersistTokens.Section := THashSHA2.GetHashString(
-    CloudCalendar.Authentication.ClientID);
-  CloudCalendar.PersistTokens.SaveClientID := False;
-  CloudCalendar.PersistTokens.SaveSecret := False;
+  CloudGoogleCalendar.PersistTokens.Location := plIniFile;
+  CloudGoogleCalendar.PersistTokens.Key := TPath.Combine(LPasta, 'Tokens.ini');
+  CloudGoogleCalendar.PersistTokens.Section := THashSHA2.GetHashString(CloudGoogleCalendar.Authentication.ClientID);
+  CloudGoogleCalendar.PersistTokens.SaveClientID := False;
+  CloudGoogleCalendar.PersistTokens.SaveSecret := False;
 
   FConectado := False;
   FAutenticando := True;
   Self.LimparLista;
   Self.DefinirOcupado(True);
-  Self.Registrar('Conectando. Autorize o acesso no navegador, se solicitado.');
+  Self.AddLog('Conectando. Autorize o acesso no navegador, se solicitado.');
 
   try
-    // Connect carrega, testa e renova os tokens persistidos.
-    CloudCalendar.Connect;
+    // Connect carrega, testa e renova os tokens persistidos
+    CloudGoogleCalendar.Connect;
   except
     on E: Exception do
     begin
       FAutenticando := False;
-      Self.Registrar('Falha ao conectar: ' + E.Message);
+      Self.AddLog('Falha ao conectar: ' + E.Message);
       Self.DefinirOcupado(False);
     end;
   end;
@@ -312,11 +294,11 @@ begin
     Exit;
 
   FAutenticando := False;
-  CloudCalendar.CancelRequests;
-  CloudCalendar.DestroyHTTPServer;
+  CloudGoogleCalendar.CancelRequests;
+  CloudGoogleCalendar.DestroyHTTPServer;
   FConectado := False;
   Self.DefinirOcupado(False);
-  Self.Registrar('Autenticacao cancelada. Feche a pagina de autorizacao.');
+  Self.AddLog('Autenticacao cancelada. Feche a pagina de autorizacao.');
 end;
 
 procedure TGoogleCalendarMain.btnSairClick(Sender: TObject);
@@ -324,15 +306,15 @@ begin
   if FOcupado then
     Exit;
 
-  CloudCalendar.DestroyHTTPServer;
-  CloudCalendar.ClearTokens;
+  CloudGoogleCalendar.DestroyHTTPServer;
+  CloudGoogleCalendar.ClearTokens;
   FConectado := False;
   Self.LimparLista;
   Self.AtualizarControles;
-  Self.Registrar('Sessao encerrada e tokens locais removidos.');
+  Self.AddLog('Sessao encerrada e tokens locais removidos.');
 end;
 
-procedure TGoogleCalendarMain.CloudCalendarConnected(Sender: TObject);
+procedure TGoogleCalendarMain.CloudGoogleCalendarConnected(Sender: TObject);
 begin
   if FEncerrando or not FAutenticando then
     Exit;
@@ -340,20 +322,47 @@ begin
   FAutenticando := False;
   FConectado := True;
   Self.DefinirOcupado(False);
-  Self.Registrar('Conta autorizada. Consultando os compromissos...');
+  Self.AddLog('Conta autorizada. Consultando os compromissos...');
   Self.CarregarEventos;
 end;
 
-procedure TGoogleCalendarMain.CloudCalendarAccessDenied(Sender: TObject;
-  const ARequestResult: TTMSFNCCloudBaseRequestResult);
+procedure TGoogleCalendarMain.CloudGoogleCalendarAccessDenied(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult);
 begin
   if FEncerrando or not FAutenticando then
     Exit;
 
   FAutenticando := False;
   FConectado := False;
-  Self.RegistrarFalha('Autenticacao', ARequestResult);
+  Self.AddLogFalha('Autenticacao', ARequestResult);
   Self.DefinirOcupado(False);
+end;
+
+procedure TGoogleCalendarMain.btnConsultarClick(Sender: TObject);
+begin
+  Self.CarregarEventos;
+end;
+
+procedure TGoogleCalendarMain.CarregarEventos;
+begin
+  if DateOf(edtDataFim.Date) < DateOf(edtDataIni.Date) then
+    raise Exception.Create('A data final da consulta deve ser igual ou posterior a inicial.');
+
+  var LCalendarID := Self.CalendarID;
+  Self.ValidarConexao;
+  Self.LimparLista;
+  Self.DefinirOcupado(True);
+  Self.AddLog('Consultando a agenda ' + LCalendarID + '...');
+
+  try
+    // timeMax e exclusivo: inclui todo o dia final escolhido.
+    CloudGoogleCalendar.GetCalendar(LCalendarID, DateOf(edtDataIni.Date), IncDay(DateOf(edtDataFim.Date)), 500);
+  except
+    on E: Exception do
+    begin
+      Self.AddLog('Falha ao consultar: ' + E.Message);
+      Self.DefinirOcupado(False);
+    end;
+  end;
 end;
 
 function TGoogleCalendarMain.CalendarID: string;
@@ -373,37 +382,20 @@ begin
     raise Exception.Create('Aguarde a operacao atual terminar.');
 end;
 
-procedure TGoogleCalendarMain.btnConsultarClick(Sender: TObject);
+procedure TGoogleCalendarMain.LimparLista;
 begin
-  Self.CarregarEventos;
+  FEventoSelecionado := nil;
+  listEventos.Items.Clear;
+  Self.LimparEditor;
 end;
 
-procedure TGoogleCalendarMain.CarregarEventos;
+procedure TGoogleCalendarMain.DefinirOcupado(const AOcupado: Boolean);
 begin
-  if DateOf(edtDataFim.Date) < DateOf(edtDataIni.Date) then
-    raise Exception.Create('A data final da consulta deve ser igual ou posterior a inicial.');
-
-  var LCalendarID := Self.CalendarID;
-  Self.ValidarConexao;
-  Self.LimparLista;
-  Self.DefinirOcupado(True);
-  Self.Registrar('Consultando a agenda ' + LCalendarID + '...');
-
-  try
-    // timeMax e exclusivo: inclui todo o dia final escolhido.
-    CloudCalendar.GetCalendar(LCalendarID,
-      DateOf(edtDataIni.Date), IncDay(DateOf(edtDataFim.Date)), 2500);
-  except
-    on E: Exception do
-    begin
-      Self.Registrar('Falha ao consultar: ' + E.Message);
-      Self.DefinirOcupado(False);
-    end;
-  end;
+  FOcupado := AOcupado;
+  Self.AtualizarControles;
 end;
 
-procedure TGoogleCalendarMain.CloudCalendarGetCalendar(Sender: TObject;
-  const ARequestResult: TTMSFNCCloudBaseRequestResult);
+procedure TGoogleCalendarMain.CloudGoogleCalendarGetCalendar(Sender: TObject; const ARequestResult: TTMSFNCCloudBaseRequestResult);
 begin
   if FEncerrando then
     Exit;
@@ -411,16 +403,16 @@ begin
   try
     if not ARequestResult.Success then
     begin
-      Self.RegistrarFalha('Consulta', ARequestResult);
+      Self.AddLogFalha('Consulta', ARequestResult);
       Exit;
     end;
 
     listEventos.Items.BeginUpdate;
     try
       listEventos.Items.Clear;
-      for var I := 0 to Pred(CloudCalendar.Items.Count) do
+      for var I := 0 to Pred(CloudGoogleCalendar.Items.Count) do
       begin
-        var LEvento := CloudCalendar.Items[I];
+        var LEvento := CloudGoogleCalendar.Items[I];
         var LLinha := listEventos.Items.Add;
         LLinha.Data := LEvento;
 
@@ -449,10 +441,10 @@ begin
       listEventos.Items.EndUpdate;
     end;
 
-    Self.Registrar(Format('%d compromisso(s) recebido(s).', [CloudCalendar.Items.Count]));
+    Self.AddLog(Format('%d compromisso(s) recebido(s).', [CloudGoogleCalendar.Items.Count]));
 
-    if CloudCalendar.Items.Count >= 2500 then
-      Self.Registrar('Limite de 2.500 registros atingido. Reduza o periodo da consulta.');
+    if CloudGoogleCalendar.Items.Count >= 500 then
+      Self.AddLog('Limite de 500 registros atingido. Reduza o periodo da consulta.');
   finally
     Self.DefinirOcupado(False);
   end;
@@ -473,13 +465,6 @@ begin
   Self.AtualizarControles;
 end;
 
-procedure TGoogleCalendarMain.LimparLista;
-begin
-  FEventoSelecionado := nil;
-  listEventos.Items.Clear;
-  Self.LimparEditor;
-end;
-
 procedure TGoogleCalendarMain.btnNovoClick(Sender: TObject);
 begin
   Self.ValidarConexao;
@@ -490,13 +475,10 @@ end;
 
 function TGoogleCalendarMain.EventoRecorrente: Boolean;
 begin
-  Result := Assigned(FEventoSelecionado) and
-    (not FEventoSelecionado.RecurringID.IsEmpty or
-     not FEventoSelecionado.Recurrence.IsEmpty);
+  Result := Assigned(FEventoSelecionado) and (not FEventoSelecionado.RecurringID.IsEmpty or not FEventoSelecionado.Recurrence.IsEmpty);
 end;
 
-procedure TGoogleCalendarMain.listEventosSelectItem(Sender: TObject;
-  Item: TListItem; Selected: Boolean);
+procedure TGoogleCalendarMain.listEventosSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
 begin
   if FOcupado then
     Exit;
@@ -505,6 +487,7 @@ begin
   begin
     if Assigned(FEventoSelecionado) and (Item.Data = Pointer(FEventoSelecionado)) then
       Self.LimparEditor;
+
     Exit;
   end;
 
@@ -533,21 +516,6 @@ begin
   Self.AtualizarControles;
 end;
 
-procedure TGoogleCalendarMain.ValidarCompromisso;
-begin
-  if Trim(edtTitulo.Text).IsEmpty then
-    raise Exception.Create('Informe o titulo do compromisso.');
-
-  if ckDiaTodo.Checked then
-  begin
-    if DateOf(edtFim.Date) < DateOf(edtInicio.Date) then
-      raise Exception.Create('A data final deve ser igual ou posterior a inicial.');
-  end
-  else if DateOf(edtFim.Date) + TimeOf(edtHoraFim.Time) <=
-    DateOf(edtInicio.Date) + TimeOf(edtHoraInicio.Time) then
-    raise Exception.Create('O termino deve ser posterior ao inicio do compromisso.');
-end;
-
 procedure TGoogleCalendarMain.ValidarSelecao;
 begin
   if not Assigned(FEventoSelecionado) then
@@ -557,8 +525,7 @@ begin
     raise Exception.Create('Este exemplo permite apenas consultar eventos recorrentes.');
 end;
 
-procedure TGoogleCalendarMain.PreencherEvento(
-  const AEvento: TTMSFNCCloudGoogleCalendarItem);
+procedure TGoogleCalendarMain.PreencherEvento( const AEvento: TTMSFNCCloudGoogleCalendarItem);
 begin
   AEvento.Summary := Trim(edtTitulo.Text);
   AEvento.Location := Trim(edtLocal.Text);
@@ -579,8 +546,45 @@ begin
   end;
 end;
 
-function TGoogleCalendarMain.PrepararEvento(
-  const AExistente: Boolean): TTMSFNCCloudGoogleCalendarItem;
+procedure TGoogleCalendarMain.btnCriarClick(Sender: TObject);
+begin
+  Self.ValidarCompromisso;
+  Self.ValidarConexao;
+
+  if Assigned(FEventoSelecionado) then
+    raise Exception.Create('Clique em Novo antes de criar outro compromisso.');
+
+  var LEvento := Self.PrepararEvento(False);
+  Self.DefinirOcupado(True);
+  Self.AddLog('Criando o compromisso...');
+
+  try
+    CloudGoogleCalendar.Add(LEvento);
+  except
+    on E: Exception do
+    begin
+      FOperacoes.Clear;
+      Self.AddLog('Falha ao criar: ' + E.Message);
+      Self.DefinirOcupado(False);
+    end;
+  end;
+end;
+
+procedure TGoogleCalendarMain.ValidarCompromisso;
+begin
+  if Trim(edtTitulo.Text).IsEmpty then
+    raise Exception.Create('Informe o titulo do compromisso.');
+
+  if ckDiaTodo.Checked then
+  begin
+    if DateOf(edtFim.Date) < DateOf(edtInicio.Date) then
+      raise Exception.Create('A data final deve ser igual ou posterior a inicial.');
+  end
+  else if DateOf(edtFim.Date) + TimeOf(edtHoraFim.Time) <= DateOf(edtInicio.Date) + TimeOf(edtHoraInicio.Time) then
+    raise Exception.Create('O termino deve ser posterior ao inicio do compromisso.');
+end;
+
+function TGoogleCalendarMain.PrepararEvento(const AExistente: Boolean): TTMSFNCCloudGoogleCalendarItem;
 begin
   FOperacoes.Clear;
   Result := FOperacoes.Add;
@@ -605,37 +609,12 @@ begin
   else
   begin
     // O conector sempre envia id; UUID hexadecimal e um ID valido no Google.
-    Result.ID := TGUID.NewGuid.ToString.Replace('{', '').Replace('}', '')
-      .Replace('-', '').ToLower;
+    Result.ID := TGUID.NewGuid.ToString.Replace('{', '').Replace('}', '').Replace('-', '').ToLower;
     Result.CalendarID := Self.CalendarID;
     Result.Visibility := viDefault;
   end;
 
   Self.PreencherEvento(Result);
-end;
-
-procedure TGoogleCalendarMain.btnCriarClick(Sender: TObject);
-begin
-  Self.ValidarCompromisso;
-  Self.ValidarConexao;
-
-  if Assigned(FEventoSelecionado) then
-    raise Exception.Create('Clique em Novo antes de criar outro compromisso.');
-
-  var LEvento := Self.PrepararEvento(False);
-  Self.DefinirOcupado(True);
-  Self.Registrar('Criando o compromisso...');
-
-  try
-    CloudCalendar.Add(LEvento);
-  except
-    on E: Exception do
-    begin
-      FOperacoes.Clear;
-      Self.Registrar('Falha ao criar: ' + E.Message);
-      Self.DefinirOcupado(False);
-    end;
-  end;
 end;
 
 procedure TGoogleCalendarMain.btnSalvarClick(Sender: TObject);
@@ -645,15 +624,15 @@ begin
   Self.ValidarConexao;
   var LEvento := Self.PrepararEvento(True);
   Self.DefinirOcupado(True);
-  Self.Registrar('Salvando as alteracoes...');
+  Self.AddLog('Salvando as alteracoes...');
 
   try
-    CloudCalendar.Update(LEvento);
+    CloudGoogleCalendar.Update(LEvento);
   except
     on E: Exception do
     begin
       FOperacoes.Clear;
-      Self.Registrar('Falha ao alterar: ' + E.Message);
+      Self.AddLog('Falha ao alterar: ' + E.Message);
       Self.DefinirOcupado(False);
     end;
   end;
@@ -664,8 +643,7 @@ begin
   Self.ValidarSelecao;
   Self.ValidarConexao;
 
-  if MessageDlg('Excluir o compromisso "' + FEventoSelecionado.Summary + '"?',
-    mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
+  if MessageDlg('Excluir o compromisso "' + FEventoSelecionado.Summary + '"?', mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
     Exit;
 
   FOperacoes.Clear;
@@ -673,60 +651,56 @@ begin
   LEvento.ID := FEventoSelecionado.ID;
   LEvento.CalendarID := FEventoSelecionado.CalendarID;
   Self.DefinirOcupado(True);
-  Self.Registrar('Excluindo o compromisso...');
+  Self.AddLog('Excluindo o compromisso...');
 
   try
-    CloudCalendar.Delete(LEvento);
+    CloudGoogleCalendar.Delete(LEvento);
   except
     on E: Exception do
     begin
       FOperacoes.Clear;
-      Self.Registrar('Falha ao excluir: ' + E.Message);
+      Self.AddLog('Falha ao excluir: ' + E.Message);
       Self.DefinirOcupado(False);
     end;
   end;
 end;
 
-procedure TGoogleCalendarMain.ConcluirOperacao(const AOperacao: string;
-  const ARequestResult: TTMSFNCCloudBaseRequestResult);
+procedure TGoogleCalendarMain.ConcluirOperacao(const AOperacao: string; const ARequestResult: TTMSFNCCloudBaseRequestResult);
 begin
   FOperacoes.Clear;
   if not ARequestResult.Success then
   begin
-    Self.RegistrarFalha(AOperacao, ARequestResult);
+    Self.AddLogFalha(AOperacao, ARequestResult);
     Self.DefinirOcupado(False);
     Exit;
   end;
 
-  Self.Registrar(AOperacao + ' concluida. Atualizando a consulta.');
+  Self.AddLog(AOperacao + ' concluida. Atualizando a consulta.');
   Self.DefinirOcupado(False);
   Self.CarregarEventos;
 end;
 
-procedure TGoogleCalendarMain.CloudCalendarAddCalendarItem(Sender: TObject;
-  const ARequestResult: TTMSFNCCloudBaseRequestResult;
-  const ACalendarItem: TTMSFNCCloudGoogleCalendarItem);
+procedure TGoogleCalendarMain.CloudGoogleCalendarAddCalendarItem(Sender: TObject;
+  const ARequestResult: TTMSFNCCloudBaseRequestResult; const ACalendarItem: TTMSFNCCloudGoogleCalendarItem);
 begin
   if FEncerrando then
     Exit;
 
   if ARequestResult.Success and Assigned(ACalendarItem) then
-    Self.Registrar('ID criado: ' + ACalendarItem.ID);
+    Self.AddLog('ID criado: ' + ACalendarItem.ID);
 
   Self.ConcluirOperacao('Criacao', ARequestResult);
 end;
 
-procedure TGoogleCalendarMain.CloudCalendarUpdateCalendarItem(Sender: TObject;
-  const ARequestResult: TTMSFNCCloudBaseRequestResult;
-  const ACalendarItem: TTMSFNCCloudGoogleCalendarItem);
+procedure TGoogleCalendarMain.CloudGoogleCalendarUpdateCalendarItem(Sender: TObject;
+  const ARequestResult: TTMSFNCCloudBaseRequestResult; const ACalendarItem: TTMSFNCCloudGoogleCalendarItem);
 begin
   if not FEncerrando then
     Self.ConcluirOperacao('Alteracao', ARequestResult);
 end;
 
-procedure TGoogleCalendarMain.CloudCalendarDeleteCalendarItem(Sender: TObject;
-  const ARequestResult: TTMSFNCCloudBaseRequestResult;
-  const ACalendarItem: TTMSFNCCloudGoogleCalendarItem);
+procedure TGoogleCalendarMain.CloudGoogleCalendarDeleteCalendarItem(Sender: TObject;
+  const ARequestResult: TTMSFNCCloudBaseRequestResult; const ACalendarItem: TTMSFNCCloudGoogleCalendarItem);
 begin
   if not FEncerrando then
     Self.ConcluirOperacao('Exclusao', ARequestResult);
