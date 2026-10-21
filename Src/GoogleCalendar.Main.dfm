@@ -35,8 +35,6 @@ object GoogleCalendarMain: TGoogleCalendarMain
       Caption = ' Consultar compromissos '
       Enabled = False
       TabOrder = 0
-      ExplicitLeft = 10
-      ExplicitTop = -6
       DesignSize = (
         688
         456)
@@ -440,12 +438,10 @@ object GoogleCalendarMain: TGoogleCalendarMain
       ReadOnly = True
       ScrollBars = ssVertical
       TabOrder = 0
-      ExplicitLeft = 4
-      ExplicitTop = 25
     end
   end
   object CloudGoogleCalendar: TTMSFNCCloudGoogleCalendar
-    Left = 784
+    Left = 778
     Top = 22
     Width = 26
     Height = 26
