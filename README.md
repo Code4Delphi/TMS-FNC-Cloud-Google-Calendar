@@ -84,7 +84,7 @@ Chamadas e eventos principais:
 
 
 ## Vídeos de demonstração
-- Em breve
+- [Delphi + Google Calendário: Integrando e Gerenciando Eventos + Criando Credenciais Google Calendar](https://www.youtube.com/watch?v=aQe0Lhvea4c)
 
 
 ## Multiplataforma
